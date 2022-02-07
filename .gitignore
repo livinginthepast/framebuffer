@@ -1,0 +1,11 @@
+*.ez
+/.fetch
+/_build
+/cover
+/deps
+/doc
+/priv/*
+/tmp
+erl_crash.dump
+framebuffer-*.tar
+
