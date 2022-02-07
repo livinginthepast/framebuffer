@@ -1,5 +1,6 @@
 *.ez
 /.fetch
+/.local/*
 /_build
 /cover
 /deps
@@ -8,4 +9,3 @@
 /tmp
 erl_crash.dump
 framebuffer-*.tar
-
