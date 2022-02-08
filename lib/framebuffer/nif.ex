@@ -7,6 +7,6 @@ defmodule Framebuffer.NIF do
     :ok = :erlang.load_nif(path, 0)
   end
 
-  @spec info(Framebuffer.device_t()) :: {:ok, Framebuffer.t()} | {:error, term()}
-  def info(_device), do: :erlang.nif_error(:nif_not_loaded)
+  @spec open(Framebuffer.device_t()) :: {:ok, Framebuffer.t()} | {:error, term()}
+  def open(_device), do: :erlang.nif_error(:nif_not_loaded)
 end
