@@ -24,7 +24,7 @@ defmodule Framebuffer.Screeninfo.Fix do
   @type t() :: %__MODULE__{
           id: binary(),
           accel: non_neg_integer(),
-          capabilities: non_neg_integer(),
+          capabilities: [Framebuffer.capability_t()],
           line_length: non_neg_integer(),
           mmio_len: non_neg_integer(),
           mmio_start: non_neg_integer(),

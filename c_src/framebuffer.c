@@ -1,5 +1,15 @@
 #include "framebuffer.h"
 
+static ERL_NIF_TERM finfo_capabilities(ErlNifEnv *env, struct fb_fix_screeninfo finfo) {
+  ERL_NIF_TERM capabilities = enif_make_list(env, 0);
+
+  if (finfo.capabilities == 1) {
+    capabilities = enif_make_list_cell(env, enif_make_atom(env, "fourcc"), capabilities);
+  }
+
+  return capabilities;
+}
+
 static ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
   ERL_NIF_TERM screeninfo = enif_make_new_map(env);
 
@@ -25,7 +35,7 @@ static ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo fin
 
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "capabilities"),
-        enif_make_int(env, finfo.capabilities),
+        finfo_capabilities(env, finfo),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
