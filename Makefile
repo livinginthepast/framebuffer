@@ -21,7 +21,7 @@ all: $(BUILD)/nif.so
 $(BUILD):
 	mkdir -p priv
 
-$(BUILD)/nif.so: c_src/nif.c priv
+$(BUILD)/nif.so: c_src/nif.c $(BUILD)
 	$(CC) $(CFLAGS) -I$(ERL_INCLUDE_PATH) c_src/*.c -o $(BUILD)/nif.so
 
 clean:

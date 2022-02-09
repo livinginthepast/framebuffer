@@ -52,6 +52,6 @@ defmodule Framebuffer do
   | ----------- | -------- | ------- |
   | framebuffer | true     |         |
   """
-  @spec open(Framebuffer.t()) :: {:ok, Framebuffer.t()} | {:error, term()}
+  @spec info(Framebuffer.t()) :: {:ok, Framebuffer.t()} | {:error, term()}
   def info(framebuffer), do: Framebuffer.NIF.info(framebuffer)
 end
