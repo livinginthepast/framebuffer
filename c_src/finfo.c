@@ -36,6 +36,35 @@ static ERL_NIF_TERM finfo_type(ErlNifEnv *env, struct fb_fix_screeninfo finfo) {
   }
 }
 
+static ERL_NIF_TERM finfo_visual(ErlNifEnv *env, struct fb_fix_screeninfo finfo) {
+  switch (finfo.visual) {
+    case 0:
+      return enif_make_atom(env, "mono01");
+      break;
+    case 1:
+      return enif_make_atom(env, "mono10");
+      break;
+    case 2:
+      return enif_make_atom(env, "truecolor");
+      break;
+    case 3:
+      return enif_make_atom(env, "pseudocolor");
+      break;
+    case 4:
+      return enif_make_atom(env, "directcolor");
+      break;
+    case 5:
+      return enif_make_atom(env, "static_pseudocolor");
+      break;
+    case 6:
+      return enif_make_atom(env, "fourcc");
+      break;
+    default:
+      return enif_make_int(env, finfo.visual);
+      break;
+  }
+}
+
 ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
   ERL_NIF_TERM screeninfo = enif_make_new_map(env);
 
@@ -96,7 +125,7 @@ ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
 
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "visual"),
-        enif_make_int(env, finfo.visual),
+        finfo_visual(env, finfo),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,

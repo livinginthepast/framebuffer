@@ -38,4 +38,12 @@ defmodule Framebuffer.Screeninfo.Fix do
 
   @type capability_t() :: :fourcc
   @type type_t() :: :packed_pixel | :planes | :interleaved_planes | :text | :vga_planes | :fourcc
+  @type visual_t() ::
+          :mono01
+          | :mono10
+          | :truecolor
+          | :pseudocolor
+          | :directcolor
+          | :static_pseudocolor
+          | :fourcc
 end
