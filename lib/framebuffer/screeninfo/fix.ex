@@ -1,4 +1,11 @@
 defmodule Framebuffer.Screeninfo.Fix do
+  @moduledoc """
+  A representation of `fb_fix_screeninfo` as defined in `linux/fb.h`. This encapsulates
+  device-independent info about the buffer device and its current format. These properties
+  are immutable from userspace by direct calls, though they may change when the format
+  is changed.
+  """
+
   defstruct [
     :id,
     :accel,

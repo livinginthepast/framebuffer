@@ -1,4 +1,11 @@
 defmodule Framebuffer.Screeninfo.Var do
+  @moduledoc """
+  A representation of `fb_var_screeninfo` as defined in `linux/fb.h`. This encapsulates
+  device-independent info about the buffer device, its format and video mode, and "other
+  miscellaneous parameters." These properties are mutable via the `FBIOPUT_VSCREENINFO`
+  ioctl.
+  """
+
   defstruct [
     :accel_flags,
     :activate,
