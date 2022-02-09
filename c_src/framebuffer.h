@@ -5,7 +5,14 @@
 
 #include "utils.h"
 
+
+typedef struct {
+  int fd;
+} FileDescriptor;
+
+
 ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
     struct fb_var_screeninfo var_info,
-    struct fb_fix_screeninfo fixed_info);
+    struct fb_fix_screeninfo fixed_info,
+    ERL_NIF_TERM fd);
 

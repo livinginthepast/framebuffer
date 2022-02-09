@@ -2,7 +2,8 @@
 
 ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
     struct fb_var_screeninfo vinfo,
-    struct fb_fix_screeninfo finfo) {
+    struct fb_fix_screeninfo finfo,
+    ERL_NIF_TERM fd) {
   ERL_NIF_TERM framebuffer = enif_make_new_map(env);
 
   ErlNifBinary bin_id;
@@ -48,6 +49,11 @@ ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
   if (!enif_make_map_put(env, framebuffer,
         enif_make_atom(env, "capabilities"),
         enif_make_int(env, finfo.capabilities),
+        &framebuffer)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, framebuffer,
+        enif_make_atom(env, "ref"),
+        fd,
         &framebuffer)) return error(env, "Failed to create framebuffer");
 
   return framebuffer;

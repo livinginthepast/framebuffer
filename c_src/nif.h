@@ -3,6 +3,7 @@
 
 #include <erl_nif.h>
 
+#include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
