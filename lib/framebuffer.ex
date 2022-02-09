@@ -28,9 +28,30 @@ defmodule Framebuffer do
 
   @type device_t() :: Path.t()
 
-  @spec open(device_t()) :: {:ok, Framebuffer.t()} | {:error, term()}
-  defdelegate open(device \\ "/dev/fb0"), to: Framebuffer.NIF
+  @doc """
+  Opens a framebuffer device and returns an `:ok` tuple with a `t:Framebuffer.t/0`
+  including fixed and variable device information and a reference to an open
+  file descriptor. This file descriptor is kept open for the lifetime of the
+  reference.
 
+  ## Arguments
+
+  | parameter | required | default  |
+  | --------- | -------- | -------- |
+  | device    | false    | /dev/fb0 |
+  """
+  @spec open(device_t()) :: {:ok, Framebuffer.t()} | {:error, term()}
+  def open(device \\ "/dev/fb0"), do: Framebuffer.NIF.open(device)
+
+  @doc """
+  Given an open framebuffer, refresh its fixed and variable device information.
+
+  ## Arguments
+
+  | parameter   | required | default |
+  | ----------- | -------- | ------- |
+  | framebuffer | true     |         |
+  """
   @spec open(Framebuffer.t()) :: {:ok, Framebuffer.t()} | {:error, term()}
-  defdelegate info(framebuffer), to: Framebuffer.NIF
+  def info(framebuffer), do: Framebuffer.NIF.info(framebuffer)
 end

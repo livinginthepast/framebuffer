@@ -12,6 +12,7 @@ defmodule Framebuffer.MixProject do
       make_clean: ["clean"],
       make_executable: :default,
       make_makefile: "Makefile",
+      preferred_cli_env: [credo: :test, dialyzer: :test, docs: :doc],
       start_permanent: Mix.env() == :prod,
       version: "0.1.0"
     ]
@@ -29,7 +30,8 @@ defmodule Framebuffer.MixProject do
     [
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:elixir_make, "~> 0.6", runtime: false}
+      {:elixir_make, "~> 0.6", runtime: false},
+      {:ex_doc, "~> 0.28", only: [:doc], runtime: false}
     ]
   end
 end
