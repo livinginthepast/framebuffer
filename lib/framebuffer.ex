@@ -26,7 +26,6 @@ defmodule Framebuffer do
           var_screeninfo: Framebuffer.Screeninfo.Var.t()
         }
 
-  @type capability_t() :: :fourcc
   @type device_t() :: Path.t()
 
   @doc """

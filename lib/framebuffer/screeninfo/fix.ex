@@ -24,15 +24,18 @@ defmodule Framebuffer.Screeninfo.Fix do
   @type t() :: %__MODULE__{
           id: binary(),
           accel: non_neg_integer(),
-          capabilities: [Framebuffer.capability_t()],
+          capabilities: [capability_t()],
           line_length: non_neg_integer(),
           mmio_len: non_neg_integer(),
           mmio_start: non_neg_integer(),
           smem_len: non_neg_integer(),
           smem_start: non_neg_integer(),
-          type: non_neg_integer(),
+          type: type_t(),
           visual: non_neg_integer(),
           xpanstep: non_neg_integer(),
           ypanstep: non_neg_integer()
         }
+
+  @type capability_t() :: :fourcc
+  @type type_t() :: :packed_pixel | :planes | :interleaved_planes | :text | :vga_planes | :fourcc
 end

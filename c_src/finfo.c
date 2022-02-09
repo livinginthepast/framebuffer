@@ -10,6 +10,32 @@ static ERL_NIF_TERM finfo_capabilities(ErlNifEnv *env, struct fb_fix_screeninfo 
   return capabilities;
 }
 
+static ERL_NIF_TERM finfo_type(ErlNifEnv *env, struct fb_fix_screeninfo finfo) {
+  switch (finfo.type) {
+    case 0:
+      return enif_make_atom(env, "packed_pixels");
+      break;
+    case 1:
+      return enif_make_atom(env, "planes");
+      break;
+    case 2:
+      return enif_make_atom(env, "interleaved_planes");
+      break;
+    case 3:
+      return enif_make_atom(env, "text");
+      break;
+    case 4:
+      return enif_make_atom(env, "vga_planes");
+      break;
+    case 5:
+      return enif_make_atom(env, "fourcc");
+      break;
+    default:
+      return enif_make_int(env, finfo.type);
+      break;
+  }
+}
+
 ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
   ERL_NIF_TERM screeninfo = enif_make_new_map(env);
 
@@ -65,7 +91,7 @@ ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
 
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "type"),
-        enif_make_int(env, finfo.type),
+        finfo_type(env, finfo),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,

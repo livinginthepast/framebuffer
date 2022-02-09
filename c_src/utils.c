@@ -12,3 +12,4 @@ ERL_NIF_TERM error(ErlNifEnv* env, const char* message) {
 ERL_NIF_TERM ok(ErlNifEnv* env, ERL_NIF_TERM value) {
   return enif_make_tuple2(env, ATOM_OK(env), value);
 }
+
