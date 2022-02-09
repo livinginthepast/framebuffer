@@ -1,24 +1,14 @@
 defmodule Framebuffer do
   defstruct [
-    :bits_per_pixel,
-    :capabilities,
-    :id,
-    :line_length,
     :ref,
-    :type,
-    :xres,
-    :yres
+    :fix_screeninfo,
+    :var_screeninfo
   ]
 
   @type t() :: %__MODULE__{
-          bits_per_pixel: non_neg_integer(),
-          capabilities: non_neg_integer(),
-          id: binary(),
-          line_length: non_neg_integer(),
           ref: reference(),
-          type: non_neg_integer(),
-          xres: non_neg_integer(),
-          yres: non_neg_integer()
+          fix_screeninfo: Framebuffer.Screeninfo.Fix.t(),
+          var_screeninfo: Framebuffer.Screeninfo.Var.t()
         }
 
   defdelegate open(device \\ "/dev/fb0"), to: Framebuffer.NIF
