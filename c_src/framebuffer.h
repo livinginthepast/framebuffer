@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 
 #include "utils.h"
+#include "finfo.h"
+#include "vinfo.h"
 
 
 typedef struct {
