@@ -10,7 +10,7 @@ static FileDescriptor* alloc_fd(ErlNifEnv* env, int fd) {
 }
 
 static void fd_destructor(ErlNifEnv* env, void* res) {
-  fprintf(stderr, "closing fd\n.");
+  DEBUG("closing fd.");
   FileDescriptor* fbfd = (FileDescriptor*) res;
   close(fbfd->fd);
 }
