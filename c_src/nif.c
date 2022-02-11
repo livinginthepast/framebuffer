@@ -70,7 +70,6 @@ static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
   FileDescriptor* fbfd;
 
   // PARSE ARGS
-
   if (argc != 1) goto badarg;
   if (!enif_is_map(env, argv[0])) goto badarg;
   if (!enif_get_map_value(env, argv[0], enif_make_atom(env, "ref"), &ref)) goto badarg;
@@ -83,6 +82,64 @@ static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
   return ok(env, enif_make_framebuffer(env, vinfo, finfo, fbfd->fd));
 
+badarg:
+  return enif_make_badarg(env);
+
+err:
+  return error(env, strerror(errno));
+}
+
+static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  struct fb_var_screeninfo vinfo;
+  struct fb_fix_screeninfo finfo;
+  ERL_NIF_TERM ref;
+  FileDescriptor* fbfd;
+  long int screensize = 0;
+  char *fbp = 0;
+  unsigned int pixel_offset = 0;
+
+  int color_arity;
+  const ERL_NIF_TERM *color;
+  int red, green, blue;
+
+  // PARSE ARGS
+  if (argc != 3) goto badarg;
+  if (!enif_is_map(env, argv[0])) goto badarg;
+  if (!enif_get_map_value(env, argv[0], enif_make_atom(env, "ref"), &ref)) goto badarg;
+  if (!enif_get_resource(env, ref, FD_RES_TYPE, (void **) &fbfd)) goto badarg;
+  if (!enif_get_uint(env, argv[1], &pixel_offset)) goto badarg;
+  // color
+  if (!enif_get_tuple(env, argv[2], &color_arity, &color)) goto badarg;
+  if (color_arity != 3) goto badarg;
+  if (!enif_get_int(env, color[0], &red)) goto badarg;
+  if (!enif_get_int(env, color[1], &green)) goto badarg;
+  if (!enif_get_int(env, color[2], &blue)) goto badarg;
+
+  // SCREENINFO
+  if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
+  if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
+
+  // GET DISPLAY
+  screensize = finfo.smem_len;
+  fbp = (char*)mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd->fd, 0);
+  if ((int)fbp == -1) goto err;
+
+  DEBUG("red: %d, size: %d, bitshift: %d\n", red, sizeof(red), (red / (1 << (8 - vinfo.red.length))));
+  DEBUG("green: %d, size: %d, bitshift: %d\n", green, sizeof(green), (green / (1 << (8 - vinfo.green.length))));
+  DEBUG("blue: %d, size: %d, bitshift: %d\n", blue, sizeof(blue), (blue / (1 << (8 - vinfo.blue.length))));
+
+  // WRITE PIXEL
+  // If red has 5 bits, then values from 0-255 are divided by 8 be normalized.
+  // If green has 6 bits, then values from 0-255 are divided by 6 to be normalized.
+  unsigned short c = ((red / (1 << (9 - vinfo.red.length))) << vinfo.red.offset) \
+                     + ((green / (1 << (9 - vinfo.green.length))) << vinfo.green.offset) \
+                     + ((blue / (1 << (9 - vinfo.blue.length))) << vinfo.blue.offset);
+  *((char*)(fbp + pixel_offset)) = c;
+
+  // RELEASE
+  munmap(fbp, screensize);
+
+  return ok(env, argv[0]);
 badarg:
   return enif_make_badarg(env);
 
@@ -111,7 +168,8 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 
 static ErlNifFunc exports[]= {
   { "open", 1, open_framebuffer, 0 },
-  { "info", 1, info_framebuffer, 0 }
+  { "info", 1, info_framebuffer, 0 },
+  { "put_pixel", 3, put_pixel, 0 }
 };
 
 ERL_NIF_INIT(Elixir.Framebuffer.NIF, exports, &on_load, NULL, NULL, NULL)

@@ -27,6 +27,13 @@ defmodule Framebuffer do
         }
 
   @type device_t() :: Path.t()
+  @type pixel_t() :: {x(), y(), color()}
+
+  @type x() :: non_neg_integer()
+  @type y() :: non_neg_integer()
+
+  @typedoc "Color: {red, green, blue}"
+  @type color() :: {non_neg_integer(), non_neg_integer(), non_neg_integer()}
 
   @doc """
   Opens a framebuffer device and returns an `:ok` tuple with a `t:Framebuffer.t/0`
@@ -87,5 +94,40 @@ defmodule Framebuffer do
       endmode
       """
     end
+  end
+
+  @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: {:ok, Framebuffer.t()}
+  def put_pixel(framebuffer, x, y, color) do
+    line_length = framebuffer.fix_screeninfo.line_length
+    bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
+    offset = x * bytes_per_pixel + y * line_length
+    IO.inspect(offset, label: "offset")
+    Framebuffer.NIF.put_pixel(framebuffer, offset, color)
+  end
+
+  @spec clear(Framebuffer.t()) :: {:ok, Framebuffer.t()}
+  def clear(framebuffer) do
+    framebuffer
+    |> to_stream()
+    |> Stream.each(fn pixel_offset ->
+      {:ok, _f} = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, {0, 0, 0})
+    end)
+    |> Stream.run()
+
+    {:ok, framebuffer}
+  end
+
+  defp to_stream(framebuffer) do
+    Stream.resource(
+      fn -> 0 end,
+      fn prev ->
+        next = prev + framebuffer.var_screeninfo.bits_per_pixel
+
+        if next > framebuffer.fix_screeninfo.smem_len,
+          do: {:halt, next},
+          else: {[prev], next}
+      end,
+      fn _pix -> nil end
+    )
   end
 end

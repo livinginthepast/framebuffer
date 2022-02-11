@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 
 #include "log.h"
 #include "utils.h"
