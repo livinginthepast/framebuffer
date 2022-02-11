@@ -44,6 +44,17 @@ defmodule Framebuffer do
   def open(device \\ "/dev/fb0"), do: Framebuffer.NIF.open(device)
 
   @doc """
+  Optimistic version of `open/1`. Raises on any error.
+  """
+  @spec open!(device_t()) :: Framebuffer.t() | no_return()
+  def open!(device \\ "/dev/fb0") do
+    case Framebuffer.NIF.open(device) do
+      {:ok, framebuffer} -> framebuffer
+      {:error, error} -> raise(error)
+    end
+  end
+
+  @doc """
   Given an open framebuffer, refresh its fixed and variable device information.
 
   ## Arguments
@@ -54,4 +65,27 @@ defmodule Framebuffer do
   """
   @spec info(Framebuffer.t()) :: {:ok, Framebuffer.t()} | {:error, term()}
   def info(framebuffer), do: Framebuffer.NIF.info(framebuffer)
+
+  @spec info!(Framebuffer.t()) :: Framebuffer.t() | no_return()
+  def info!(framebuffer) do
+    case Framebuffer.NIF.info(framebuffer) do
+      {:ok, framebuffer} -> framebuffer
+      {:error, error} -> raise(error)
+    end
+  end
+
+  defimpl String.Chars do
+    def to_string(framebuffer) do
+      var = framebuffer.var_screeninfo
+
+      """
+      mode "#{var.xres}x#{var.yres}"
+          geometry #{var.xres} #{var.yres} #{var.xres_virtual} #{var.yres_virtual} #{var.bits_per_pixel}
+          timings #{var.pixclock} #{var.left_margin} #{var.right_margin} #{var.upper_margin} #{var.lower_margin} #{var.hsync_len} #{var.vsync_len}
+          nonstd #{var.nonstd}
+          rgba #{var.red},#{var.green},#{var.blue},#{var.transp}
+      endmode
+      """
+    end
+  end
 end

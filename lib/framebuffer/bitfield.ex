@@ -23,4 +23,10 @@ defmodule Framebuffer.Bitfield do
           length: non_neg_integer(),
           msb_right: non_neg_integer()
         }
+
+  defimpl String.Chars do
+    def to_string(bf) do
+      "#{bf.length}/#{bf.offset}"
+    end
+  end
 end
