@@ -1,5 +1,39 @@
 #include "vinfo.h"
 
+static ERL_NIF_TERM enif_make_bitfield(ErlNifEnv* env, struct fb_bitfield field) {
+  ERL_NIF_TERM bitfield = enif_make_new_map(env);
+
+  if (!enif_make_map_put(env, bitfield,
+        enif_make_atom(env, "__struct__"),
+        enif_make_atom(env, "Elixir.Framebuffer.Bitfield"),
+        &bitfield)) return error(env, "Failed to create bitfield");
+
+  if (!enif_make_map_put(env, bitfield,
+        enif_make_atom(env, "offset"),
+        enif_make_int(env, field.offset),
+        &bitfield)) return error(env, "Failed to create biffield");
+
+  if (!enif_make_map_put(env, bitfield,
+        enif_make_atom(env, "length"),
+        enif_make_int(env, field.length),
+        &bitfield)) return error(env, "Failed to create biffield");
+
+  if (!enif_make_map_put(env, bitfield,
+        enif_make_atom(env, "msb_right"),
+        enif_make_int(env, field.msb_right),
+        &bitfield)) return error(env, "Failed to create biffield");
+
+  return bitfield;
+}
+
+static ERL_NIF_TERM vinfo_grayscale(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
+  if (vinfo.grayscale == 0) {
+    return enif_make_atom(env, "color");
+  } else {
+    return enif_make_atom(env, "grayscale");
+  }
+}
+
 ERL_NIF_TERM vinfo_to_struct(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
   ERL_NIF_TERM screeninfo = enif_make_new_map(env);
 
@@ -24,8 +58,23 @@ ERL_NIF_TERM vinfo_to_struct(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "blue"),
+        enif_make_bitfield(env, vinfo.blue),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "colorspace"),
         enif_make_int(env, vinfo.colorspace),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "grayscale"),
+        vinfo_grayscale(env, vinfo),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "green"),
+        enif_make_bitfield(env, vinfo.green),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
@@ -36,11 +85,6 @@ ERL_NIF_TERM vinfo_to_struct(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "hsync_len"),
         enif_make_int(env, vinfo.hsync_len),
-        &screeninfo)) return error(env, "Failed to create framebuffer");
-
-  if (!enif_make_map_put(env, screeninfo,
-        enif_make_atom(env, "grayscale"),
-        enif_make_int(env, vinfo.grayscale),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
@@ -64,6 +108,11 @@ ERL_NIF_TERM vinfo_to_struct(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "red"),
+        enif_make_bitfield(env, vinfo.red),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "right_margin"),
         enif_make_int(env, vinfo.right_margin),
         &screeninfo)) return error(env, "Failed to create framebuffer");
@@ -76,6 +125,11 @@ ERL_NIF_TERM vinfo_to_struct(ErlNifEnv* env, struct fb_var_screeninfo vinfo) {
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "sync"),
         enif_make_int(env, vinfo.sync),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "transp"),
+        enif_make_bitfield(env, vinfo.transp),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,

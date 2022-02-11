@@ -376,6 +376,11 @@ ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "type_aux"),
+        enif_make_int(env, finfo.type_aux),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "visual"),
         finfo_visual(env, finfo),
         &screeninfo)) return error(env, "Failed to create framebuffer");
@@ -388,6 +393,11 @@ ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo) {
   if (!enif_make_map_put(env, screeninfo,
         enif_make_atom(env, "ypanstep"),
         enif_make_int(env, finfo.ypanstep),
+        &screeninfo)) return error(env, "Failed to create framebuffer");
+
+  if (!enif_make_map_put(env, screeninfo,
+        enif_make_atom(env, "ywrapstep"),
+        enif_make_int(env, finfo.ywrapstep),
         &screeninfo)) return error(env, "Failed to create framebuffer");
 
   return screeninfo;

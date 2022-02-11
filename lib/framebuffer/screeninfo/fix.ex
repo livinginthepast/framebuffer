@@ -16,9 +16,11 @@ defmodule Framebuffer.Screeninfo.Fix do
     :smem_len,
     :smem_start,
     :type,
+    :type_aux,
     :visual,
     :xpanstep,
-    :ypanstep
+    :ypanstep,
+    :ywrapstep
   ]
 
   @type t() :: %__MODULE__{
@@ -31,9 +33,11 @@ defmodule Framebuffer.Screeninfo.Fix do
           smem_len: non_neg_integer(),
           smem_start: non_neg_integer(),
           type: type_t(),
+          type_aux: non_neg_integer(),
           visual: visual_t(),
           xpanstep: non_neg_integer(),
-          ypanstep: non_neg_integer()
+          ypanstep: non_neg_integer(),
+          ywrapstep: non_neg_integer()
         }
 
   @type accel_t() ::
