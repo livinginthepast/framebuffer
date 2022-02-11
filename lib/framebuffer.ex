@@ -9,7 +9,7 @@ defmodule Framebuffer do
 
   ## Linux documentation
 
-  - [fb device API](https://github.com/torvalds/linux/blob/5bfc75d92efd494db37f5c4c173d3639d4772966/Documentation/fb/api.rst)
+  - [fb device API](https://github.com/torvalds/linux/blob/master/Documentation/fb/api.rst)
   - [fb driver API](https://github.com/torvalds/linux/blob/master/Documentation/driver-api/frame-buffer.rst)
 
   """
