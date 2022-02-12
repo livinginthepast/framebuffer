@@ -126,14 +126,14 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   fbp = (char*)mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd->fd, 0);
   if ((int)fbp == -1) goto err;
 
+  // WRITE PIXEL
+  // If red has 5 bits, then values from 0-255 are converted to 0-31.
+  // If green has 6 bits, then values from 0-255 are converted to 0-63.
   DEBUG("offset: %d, red: %d, green: %d, blue: %d", pixel_offset, red, green, blue);
   red = (red / (1 << (8 - vinfo.red.length)));
   green = (green / (1 << (8 - vinfo.green.length)));
   blue = (blue / (1 << (8 - vinfo.blue.length)));
 
-  // WRITE PIXEL
-  // If red has 5 bits, then values from 0-255 are divided by 8 be normalized.
-  // If green has 6 bits, then values from 0-255 are divided by 6 to be normalized.
   unsigned int c = (red << vinfo.red.offset) \
                      + (green << vinfo.green.offset) \
                      + (blue << vinfo.blue.offset);
