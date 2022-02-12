@@ -14,6 +14,10 @@ ifeq ($(UNAME), Linux)
 	CFLAGS += -g -O3 -fpic -shared -Wall -Wextra -Wno-unused-parameter
 endif
 
+ifdef NIF_DEBUG
+	CFLAGS += -DNIF_DEBUG
+endif
+
 BUILD = $(MIX_APP_PATH)/priv
 
 all: $(BUILD)/nif.so
