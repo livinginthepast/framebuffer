@@ -14,3 +14,10 @@ def deps do
 end
 ```
 
+## Thank yous / inspirations
+
+This project could not have been completed without the following projects and posts.
+Thank you thank you thank you! 🙇🙇🙇🙏.
+
+- http://raspberrycompote.blogspot.com/2012/12/low-level-graphics-on-raspberry-pi-part_9509.html
+
