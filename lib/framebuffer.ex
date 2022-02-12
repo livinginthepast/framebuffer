@@ -125,6 +125,19 @@ defmodule Framebuffer do
     {:ok, framebuffer}
   end
 
+  @spec rand(Framebuffer.t()) :: {:ok, Framebuffer.t()}
+  def rand(framebuffer) do
+    framebuffer
+    |> to_stream()
+    |> Stream.each(fn pixel_offset ->
+      color = {:rand.uniform(256) - 1, :rand.uniform(256) - 1, :rand.uniform(256) - 1}
+      :ok = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, color)
+    end)
+    |> Stream.run()
+
+    {:ok, framebuffer}
+  end
+
   defp to_stream(framebuffer) do
     bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
 
