@@ -96,13 +96,21 @@ defmodule Framebuffer do
     end
   end
 
-  @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: {:ok, Framebuffer.t()}
+  @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: {:ok, Framebuffer.t()} | {:error, term()}
   def put_pixel(framebuffer, x, y, color) do
-    line_length = framebuffer.fix_screeninfo.line_length
-    bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
-    offset = x * bytes_per_pixel + y * line_length
-    IO.inspect(offset, label: "offset")
-    Framebuffer.NIF.put_pixel(framebuffer, offset, color)
+    cond do
+      x >= framebuffer.var_screeninfo.xres ->
+        {:error, "out of bounds"}
+
+      y >= framebuffer.var_screeninfo.yres ->
+        {:error, "out of bounds"}
+
+      true ->
+        line_length = framebuffer.fix_screeninfo.line_length
+        bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
+        offset = x * bytes_per_pixel + y * line_length
+        Framebuffer.NIF.put_pixel(framebuffer, offset, color)
+    end
   end
 
   @spec clear(Framebuffer.t()) :: {:ok, Framebuffer.t()}
@@ -118,16 +126,17 @@ defmodule Framebuffer do
   end
 
   defp to_stream(framebuffer) do
-    Stream.resource(
-      fn -> 0 end,
+    bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
+
+    Stream.unfold(
+      0,
       fn prev ->
-        next = prev + framebuffer.var_screeninfo.bits_per_pixel
+        next = prev + bytes_per_pixel
 
         if next > framebuffer.fix_screeninfo.smem_len,
-          do: {:halt, next},
-          else: {[prev], next}
-      end,
-      fn _pix -> nil end
+          do: nil,
+          else: {prev, next}
+      end
     )
   end
 end
