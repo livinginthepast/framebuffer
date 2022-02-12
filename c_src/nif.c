@@ -148,7 +148,7 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   // RELEASE
   munmap(fbp, screensize);
 
-  return ok(env, argv[0]);
+  return ATOM_OK(env);
 badarg:
   return enif_make_badarg(env);
 

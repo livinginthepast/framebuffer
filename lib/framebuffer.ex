@@ -96,7 +96,7 @@ defmodule Framebuffer do
     end
   end
 
-  @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: {:ok, Framebuffer.t()} | {:error, term()}
+  @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: :ok | {:error, term()}
   def put_pixel(framebuffer, x, y, color) do
     cond do
       x >= framebuffer.var_screeninfo.xres ->
@@ -118,7 +118,7 @@ defmodule Framebuffer do
     framebuffer
     |> to_stream()
     |> Stream.each(fn pixel_offset ->
-      {:ok, _f} = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, {0, 0, 0})
+      :ok = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, {0, 0, 0})
     end)
     |> Stream.run()
 
