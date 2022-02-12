@@ -94,9 +94,9 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   struct fb_fix_screeninfo finfo;
   ERL_NIF_TERM ref;
   FileDescriptor* fbfd;
-  long int screensize = 0;
-  char *fbp = 0;
+  unsigned int screensize = 0;
   unsigned int pixel_offset = 0;
+  char *fbp = 0;
 
   int color_arity;
   const ERL_NIF_TERM *color;
@@ -119,22 +119,28 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
+
   // GET DISPLAY
   screensize = finfo.smem_len;
+  if (pixel_offset > screensize) return error(env, "Pixel offset out of bounds");
   fbp = (char*)mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd->fd, 0);
   if ((int)fbp == -1) goto err;
 
-  DEBUG("red: %d, size: %d, bitshift: %d\n", red, sizeof(red), (red / (1 << (8 - vinfo.red.length))));
-  DEBUG("green: %d, size: %d, bitshift: %d\n", green, sizeof(green), (green / (1 << (8 - vinfo.green.length))));
-  DEBUG("blue: %d, size: %d, bitshift: %d\n", blue, sizeof(blue), (blue / (1 << (8 - vinfo.blue.length))));
+  DEBUG("offset: %d, red: %d, green: %d, blue: %d", pixel_offset, red, green, blue);
+  red = (red / (1 << (8 - vinfo.red.length)));
+  green = (green / (1 << (8 - vinfo.green.length)));
+  blue = (blue / (1 << (8 - vinfo.blue.length)));
 
   // WRITE PIXEL
   // If red has 5 bits, then values from 0-255 are divided by 8 be normalized.
   // If green has 6 bits, then values from 0-255 are divided by 6 to be normalized.
-  unsigned short c = ((red / (1 << (9 - vinfo.red.length))) << vinfo.red.offset) \
-                     + ((green / (1 << (9 - vinfo.green.length))) << vinfo.green.offset) \
-                     + ((blue / (1 << (9 - vinfo.blue.length))) << vinfo.blue.offset);
-  *((char*)(fbp + pixel_offset)) = c;
+  unsigned int c = (red << vinfo.red.offset) \
+                     + (green << vinfo.green.offset) \
+                     + (blue << vinfo.blue.offset);
+  /* *((char*)(fbp + pixel_offset)) = c; */
+  *((unsigned short*)(fbp + pixel_offset)) = c;
+
+  DEBUG("normalized: red: %d, green: %d, blue: %d, color: %d", red, green, blue, c);
 
   // RELEASE
   munmap(fbp, screensize);
