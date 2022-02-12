@@ -124,6 +124,8 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   screensize = finfo.smem_len;
   if (pixel_offset > screensize) return error(env, "Pixel offset out of bounds");
   fbp = (char*)mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd->fd, 0);
+
+  // Hard-coded to 32bit arch; warns on 64bit
   if ((int)fbp == -1) goto err;
 
   // WRITE PIXEL
@@ -137,7 +139,8 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   unsigned int c = (red << vinfo.red.offset) \
                      + (green << vinfo.green.offset) \
                      + (blue << vinfo.blue.offset);
-  /* *((char*)(fbp + pixel_offset)) = c; */
+
+  // Hard-coded to 16bit on 32bit arch
   *((unsigned short*)(fbp + pixel_offset)) = c;
 
   DEBUG("normalized: red: %d, green: %d, blue: %d, color: %d", red, green, blue, c);
