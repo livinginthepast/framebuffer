@@ -106,19 +106,18 @@ defmodule Framebuffer do
         {:error, "out of bounds"}
 
       true ->
-        line_length = framebuffer.fix_screeninfo.line_length
-        bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
-        offset = x * bytes_per_pixel + y * line_length
-        Framebuffer.NIF.put_pixel(framebuffer, offset, color)
+        Framebuffer.NIF.put_pixel(framebuffer, x, y, color)
     end
   end
 
   @spec clear(Framebuffer.t()) :: {:ok, Framebuffer.t()}
   def clear(framebuffer) do
+    zero = {0, 0, 0}
+
     framebuffer
     |> to_stream()
-    |> Stream.each(fn pixel_offset ->
-      :ok = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, {0, 0, 0})
+    |> Stream.each(fn {x, y} ->
+      :ok = Framebuffer.NIF.put_pixel(framebuffer, x, y, zero)
     end)
     |> Stream.run()
 
@@ -129,9 +128,9 @@ defmodule Framebuffer do
   def rand(framebuffer) do
     framebuffer
     |> to_stream()
-    |> Stream.each(fn pixel_offset ->
+    |> Stream.each(fn {x, y} ->
       color = {:rand.uniform(256) - 1, :rand.uniform(256) - 1, :rand.uniform(256) - 1}
-      :ok = Framebuffer.NIF.put_pixel(framebuffer, pixel_offset, color)
+      :ok = Framebuffer.NIF.put_pixel(framebuffer, x, y, color)
     end)
     |> Stream.run()
 
@@ -139,16 +138,22 @@ defmodule Framebuffer do
   end
 
   defp to_stream(framebuffer) do
-    bytes_per_pixel = trunc(framebuffer.var_screeninfo.bits_per_pixel / 8)
+    xlimit = framebuffer.var_screeninfo.xres - 1
+    ylimit = framebuffer.var_screeninfo.yres - 1
 
     Stream.unfold(
-      0,
-      fn prev ->
-        next = prev + bytes_per_pixel
+      {0, 0},
+      fn
+        {^xlimit, ^ylimit} ->
+          nil
 
-        if next > framebuffer.fix_screeninfo.smem_len,
-          do: nil,
-          else: {prev, next}
+        {^xlimit, y} = prev ->
+          next = {0, y + 1}
+          {prev, next}
+
+        {x, y} = prev ->
+          next = {x + 1, y}
+          {prev, next}
       end
     )
   end

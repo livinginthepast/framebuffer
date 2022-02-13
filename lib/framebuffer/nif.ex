@@ -16,9 +16,10 @@ defmodule Framebuffer.NIF do
   @spec put_pixel(
           Framebuffer.t(),
           non_neg_integer(),
+          non_neg_integer(),
           Framebuffer.color()
         ) ::
           :ok | {:error, term()}
-  def put_pixel(_framebuffer, _offset, _color),
+  def put_pixel(_framebuffer, _x, _y, _color),
     do: :erlang.nif_error(:nif_not_loaded)
 end

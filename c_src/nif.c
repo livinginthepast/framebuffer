@@ -97,8 +97,8 @@ static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
-  if (!fb_put_finfo(env, finfo, &framebuffer)) goto err;
-  if (!fb_put_vinfo(env, vinfo, &framebuffer)) goto err;
+  if (!fb_put_finfo(env, finfo, &framebuffer)) return error(env, "Unable to set finfo");
+  if (!fb_put_vinfo(env, vinfo, &framebuffer)) return error(env, "Unable to set vinfo");
 
   return ok(env, framebuffer);
 
@@ -112,32 +112,35 @@ err:
 static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   struct fb_var_screeninfo vinfo;
   struct fb_fix_screeninfo finfo;
-  ERL_NIF_TERM ref;
   FrameBuffer* fbfd;
-  unsigned int pixel_offset = 0;
+  unsigned int x = 0,
+               y = 0,
+               pixel_offset = 0;
 
   int color_arity;
   const ERL_NIF_TERM *color;
   int red, green, blue;
 
   // PARSE ARGS
-  if (argc != 3) goto badarg;
+  if (argc != 4) goto badarg;
   if (!enif_is_map(env, argv[0])) goto badarg;
-  if (!enif_get_map_value(env, argv[0], enif_make_atom(env, "ref"), &ref)) goto badarg;
-  if (!enif_get_resource(env, ref, FD_RES_TYPE, (void **) &fbfd)) goto badarg;
-  if (!enif_get_uint(env, argv[1], &pixel_offset)) goto badarg;
+  if (!enif_get_framebuffer(env, argv[0], &fbfd)) return error(env, "Error reading ref from Framebuffer");
+  if (!enif_get_uint(env, argv[1], &x)) return error(env, "x must be an unsigned int");
+  if (!enif_get_uint(env, argv[2], &y)) return error(env, "y must be an unsigned int");
   // color
-  if (!enif_get_tuple(env, argv[2], &color_arity, &color)) goto badarg;
-  if (color_arity != 3) goto badarg;
-  if (!enif_get_int(env, color[0], &red)) goto badarg;
-  if (!enif_get_int(env, color[1], &green)) goto badarg;
-  if (!enif_get_int(env, color[2], &blue)) goto badarg;
+  if (!enif_get_tuple(env, argv[3], &color_arity, &color)) return error(env, "Color should be a tuple in the format {red, blue, green}");
+  if (color_arity != 3) return error(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[0], &red)) return error(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[1], &green)) return error(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[2], &blue)) return error(env, "Color should be a tuple in the format {red, blue, green}");
 
   // SCREENINFO
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
-  if (pixel_offset > fbfd->screensize) return error(env, "Pixel offset out of bounds");
+  if (x > vinfo.xres) return error(env, "Pixel out of bounds");
+  if (y > vinfo.yres) return error(env, "Pixel out of bounds");
+  pixel_offset = (x + vinfo.xoffset) * (vinfo.bits_per_pixel / 8) + (y + vinfo.yoffset) * finfo.line_length;
 
   // WRITE PIXEL
   // If red has 5 bits, then values from 0-255 are converted to 0-31.
@@ -186,7 +189,7 @@ static int on_load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info) {
 static ErlNifFunc exports[]= {
   { "open", 1, open_framebuffer, 0 },
   { "info", 1, info_framebuffer, 0 },
-  { "put_pixel", 3, put_pixel, 0 }
+  { "put_pixel", 4, put_pixel, 0 }
 };
 
 ERL_NIF_INIT(Elixir.Framebuffer.NIF, exports, &on_load, NULL, NULL, NULL)
