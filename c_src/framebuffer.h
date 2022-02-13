@@ -16,10 +16,11 @@ typedef struct {
 } FrameBuffer;
 
 
-ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
-    struct fb_var_screeninfo var_info,
+int enif_make_framebuffer(ErlNifEnv* env,
     struct fb_fix_screeninfo fixed_info,
-    ERL_NIF_TERM fd);
+    struct fb_var_screeninfo var_info,
+    ERL_NIF_TERM fd,
+    ERL_NIF_TERM* fb);
 
 int fb_put_finfo(ErlNifEnv* env, struct fb_fix_screeninfo finfo, ERL_NIF_TERM* framebuffer);
 int fb_put_vinfo(ErlNifEnv* env, struct fb_var_screeninfo vinfo, ERL_NIF_TERM* framebuffer);

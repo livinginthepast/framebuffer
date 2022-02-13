@@ -1,6 +1,6 @@
 #include "utils.h"
 
-ERL_NIF_TERM error(ErlNifEnv* env, const char* message) {
+ERL_NIF_TERM error_tuple(ErlNifEnv* env, const char* message) {
   ErlNifBinary error;
   enif_alloc_binary(strlen(message), &error);
   memcpy(error.data, message, strlen(message));

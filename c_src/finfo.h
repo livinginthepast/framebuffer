@@ -4,4 +4,4 @@
 
 #include "utils.h"
 
-ERL_NIF_TERM finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo);
+int finfo_to_struct(ErlNifEnv* env, struct fb_fix_screeninfo finfo, ERL_NIF_TERM* fix_screeninfo);

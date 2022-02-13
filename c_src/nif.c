@@ -37,7 +37,7 @@ static ERL_NIF_TERM open_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
   struct fb_var_screeninfo vinfo;
   struct fb_fix_screeninfo finfo;
 
-  char *fbp = 0, *bbp = 0;
+  char *fbp, *bbp, *path;
   int fb = 0;
   unsigned int screensize = 0;
   ERL_NIF_TERM fd;
@@ -48,18 +48,20 @@ static ERL_NIF_TERM open_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
   ErlNifBinary device;
   if (!enif_inspect_iolist_as_binary(env, argv[0], &device)) goto badarg;
-  char *path = strndup((char*) device.data, device.size);
+  path = strndup((char*) device.data, device.size);
   enif_release_binary(&device);
 
   //***** Open the file descriptor to /dev/fb0.
   fb = open(path, O_RDWR);
-  free(path);
-  if (fb == FD_CLOSED) goto err;
+  if (fb == FD_CLOSED) {
+    free(path);
+    goto err;
+  }
 
   //***** Read fixed and variable framebuffer info.
   if (ioctl(fb, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fb, FBIOGET_VSCREENINFO, &vinfo)) goto err;
-  screensize = finfo.smem_len;
+  screensize = vinfo.yres_virtual * finfo.line_length;
 
   //***** Open r/w pointers to memory representing the display.
   fbp = (char*)mmap(0, screensize * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fb, (off_t)0);
@@ -72,14 +74,17 @@ static ERL_NIF_TERM open_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
   fd = enif_make_resource(env, fbfd);
   enif_release_resource(fbfd);
 
-  return ok(env, enif_make_framebuffer(env, vinfo, finfo, fd));
+  ERL_NIF_TERM framebuffer;
+  if (!enif_make_framebuffer(env, finfo, vinfo, fd, &framebuffer)) return error_tuple(env, "Unable to create Framebuffer");
+
+  return ok(env, framebuffer);
 
 badarg:
   return enif_make_badarg(env);
 
 err:
-  if (screensize > 0 && fbp != 0) munmap(fbp, screensize * 2);
-  return error(env, strerror(errno));
+  /* if (screensize > 0 && fbp != 0) munmap(fbp, screensize * 2); */
+  return error_tuple(env, strerror(errno));
 }
 
 static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -97,8 +102,8 @@ static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TER
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
-  if (!fb_put_finfo(env, finfo, &framebuffer)) return error(env, "Unable to set finfo");
-  if (!fb_put_vinfo(env, vinfo, &framebuffer)) return error(env, "Unable to set vinfo");
+  if (!fb_put_finfo(env, finfo, &framebuffer)) return error_tuple(env, "Unable to set finfo");
+  if (!fb_put_vinfo(env, vinfo, &framebuffer)) return error_tuple(env, "Unable to set vinfo");
 
   return ok(env, framebuffer);
 
@@ -106,7 +111,7 @@ badarg:
   return enif_make_badarg(env);
 
 err:
-  return error(env, strerror(errno));
+  return error_tuple(env, strerror(errno));
 }
 
 static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -124,22 +129,22 @@ static ERL_NIF_TERM put_pixel(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
   // PARSE ARGS
   if (argc != 4) goto badarg;
   if (!enif_is_map(env, argv[0])) goto badarg;
-  if (!enif_get_framebuffer(env, argv[0], &fbfd)) return error(env, "Error reading ref from Framebuffer");
-  if (!enif_get_uint(env, argv[1], &x)) return error(env, "x must be an unsigned int");
-  if (!enif_get_uint(env, argv[2], &y)) return error(env, "y must be an unsigned int");
+  if (!enif_get_framebuffer(env, argv[0], &fbfd)) return error_tuple(env, "Error reading ref from Framebuffer");
+  if (!enif_get_uint(env, argv[1], &x)) return error_tuple(env, "x must be an unsigned int");
+  if (!enif_get_uint(env, argv[2], &y)) return error_tuple(env, "y must be an unsigned int");
   // color
-  if (!enif_get_tuple(env, argv[3], &color_arity, &color)) return error(env, "Color should be a tuple in the format {red, blue, green}");
-  if (color_arity != 3) return error(env, "Color should be a tuple in the format {red, blue, green}");
-  if (!enif_get_int(env, color[0], &red)) return error(env, "Color should be a tuple in the format {red, blue, green}");
-  if (!enif_get_int(env, color[1], &green)) return error(env, "Color should be a tuple in the format {red, blue, green}");
-  if (!enif_get_int(env, color[2], &blue)) return error(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_tuple(env, argv[3], &color_arity, &color)) return error_tuple(env, "Color should be a tuple in the format {red, blue, green}");
+  if (color_arity != 3) return error_tuple(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[0], &red)) return error_tuple(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[1], &green)) return error_tuple(env, "Color should be a tuple in the format {red, blue, green}");
+  if (!enif_get_int(env, color[2], &blue)) return error_tuple(env, "Color should be a tuple in the format {red, blue, green}");
 
   // SCREENINFO
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
-  if (x > vinfo.xres) return error(env, "Pixel out of bounds");
-  if (y > vinfo.yres) return error(env, "Pixel out of bounds");
+  if (x > vinfo.xres) return error_tuple(env, "Pixel out of bounds");
+  if (y > vinfo.yres) return error_tuple(env, "Pixel out of bounds");
   pixel_offset = (x + vinfo.xoffset) * (vinfo.bits_per_pixel / 8) + (y + vinfo.yoffset) * finfo.line_length;
 
   // WRITE PIXEL
@@ -164,7 +169,7 @@ badarg:
   return enif_make_badarg(env);
 
 err:
-  return error(env, strerror(errno));
+  return error_tuple(env, strerror(errno));
 }
 
 //
