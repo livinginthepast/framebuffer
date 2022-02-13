@@ -9,8 +9,11 @@
 
 
 typedef struct {
-  int fd;
-} FileDescriptor;
+  int fd;    // file descriptor to /dev/fbX
+  char *fbp; // pointer representing the front buffer
+  char *bbp; // pointer representing the back buffer
+  unsigned int screensize;
+} FrameBuffer;
 
 
 ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
