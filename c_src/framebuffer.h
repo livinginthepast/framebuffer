@@ -21,3 +21,5 @@ ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
     struct fb_fix_screeninfo fixed_info,
     ERL_NIF_TERM fd);
 
+int fb_put_finfo(ErlNifEnv* env, struct fb_fix_screeninfo finfo, ERL_NIF_TERM* framebuffer);
+int fb_put_vinfo(ErlNifEnv* env, struct fb_var_screeninfo vinfo, ERL_NIF_TERM* framebuffer);

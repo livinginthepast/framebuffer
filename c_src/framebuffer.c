@@ -32,3 +32,24 @@ ERL_NIF_TERM enif_make_framebuffer(ErlNifEnv* env,
   return framebuffer;
 }
 
+int fb_put_finfo(ErlNifEnv* env, struct fb_fix_screeninfo finfo, ERL_NIF_TERM* framebuffer) {
+  ERL_NIF_TERM fix_screeninfo = finfo_to_struct(env, finfo);
+
+  if (!enif_make_map_put(env, *framebuffer,
+        enif_make_atom(env, "fix_screeninfo"),
+        fix_screeninfo,
+        framebuffer)) return 0;
+
+  return 1;
+}
+
+int fb_put_vinfo(ErlNifEnv* env, struct fb_var_screeninfo vinfo, ERL_NIF_TERM* framebuffer) {
+  ERL_NIF_TERM var_screeninfo = vinfo_to_struct(env, vinfo);
+
+  if (!enif_make_map_put(env, *framebuffer,
+        enif_make_atom(env, "var_screeninfo"),
+        var_screeninfo,
+        framebuffer)) return 0;
+
+  return 1;
+}

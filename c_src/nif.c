@@ -19,18 +19,29 @@ static void fb_destructor(ErlNifEnv* env, void* res) {
   close(fbfd->fd);
 }
 
+static int enif_get_framebuffer(ErlNifEnv* env, ERL_NIF_TERM framebuffer, FrameBuffer** fbfd) {
+  ERL_NIF_TERM ref;
+  FrameBuffer* fb;
+  if (!enif_get_map_value(env, framebuffer, enif_make_atom(env, "ref"), &ref)) return 0;
+  if (!enif_get_resource(env, ref, FD_RES_TYPE, (void **) &fb)) return 0;
+  *fbfd = fb;
+
+  return 1;
+}
+
 //
 // API
 //
 
 static ERL_NIF_TERM open_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  struct fb_var_screeninfo vinfo;
+  struct fb_fix_screeninfo finfo;
+
   char *fbp = 0, *bbp = 0;
   int fb = 0;
   unsigned int screensize = 0;
   ERL_NIF_TERM fd;
   FrameBuffer *fbfd = NULL;
-  struct fb_var_screeninfo vinfo;
-  struct fb_fix_screeninfo finfo;
 
   //***** Parse args.
   if (argc != 1) goto badarg;
@@ -74,21 +85,22 @@ err:
 static ERL_NIF_TERM info_framebuffer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   struct fb_var_screeninfo vinfo;
   struct fb_fix_screeninfo finfo;
-  ERL_NIF_TERM ref;
   FrameBuffer* fbfd;
+  ERL_NIF_TERM framebuffer;
 
   // PARSE ARGS
   if (argc != 1) goto badarg;
-  if (!enif_is_map(env, argv[0])) goto badarg;
-  if (!enif_get_map_value(env, argv[0], enif_make_atom(env, "ref"), &ref)) goto badarg;
-  if (!enif_get_resource(env, ref, FD_RES_TYPE, (void **) &fbfd)) goto badarg;
+  framebuffer = argv[0];
+  if (!enif_is_map(env, framebuffer)) goto badarg;
+  if (!enif_get_framebuffer(env, framebuffer, &fbfd)) goto badarg;
 
-  // fixed screen info
   if (ioctl(fbfd->fd, FBIOGET_FSCREENINFO, &finfo)) goto err;
-  // variable screen info
   if (ioctl(fbfd->fd, FBIOGET_VSCREENINFO, &vinfo)) goto err;
 
-  return ok(env, enif_make_framebuffer(env, vinfo, finfo, fbfd->fd));
+  if (!fb_put_finfo(env, finfo, &framebuffer)) goto err;
+  if (!fb_put_vinfo(env, vinfo, &framebuffer)) goto err;
+
+  return ok(env, framebuffer);
 
 badarg:
   return enif_make_badarg(env);
