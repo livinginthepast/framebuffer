@@ -8,7 +8,7 @@ defmodule Framebuffer.MixProject do
   def project do
     [
       app: :framebuffer,
-      compilers: [:elixir_make] ++ Mix.compilers(),
+      compilers: compilers(),
       deps: deps(),
       description: "Interact with Linux framebuffers",
       elixir: "~> 1.12",
@@ -30,6 +30,18 @@ defmodule Framebuffer.MixProject do
     [
       extra_applications: [:logger]
     ]
+  end
+
+  def compilers do
+    case :os.type() do
+      {:unix, :linux} ->
+        [:elixir_make] ++ Mix.compilers()
+
+      _other ->
+        IO.warn("The framebuffer NIF only compiles on Linux", Macro.Env.stacktrace(__ENV__))
+
+        Mix.compilers()
+    end
   end
 
   # Run "mix help deps" to learn about dependencies.
