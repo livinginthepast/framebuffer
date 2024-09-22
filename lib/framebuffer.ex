@@ -29,10 +29,14 @@ defmodule Framebuffer do
   @type device_t() :: Path.t()
   @type pixel_t() :: {x(), y(), color()}
 
+  @typedoc "The horizontal offset of a pixel, where 0 is the top of the screen"
   @type x() :: non_neg_integer()
+  @typedoc "The vertical offset of a pixel, where 0 is the left of the screen"
   @type y() :: non_neg_integer()
 
-  @typedoc "Color: {red, green, blue}"
+  @typedoc """
+  Color: {red, green, blue}, where color values are integers from 0-255
+  """
   @type color() :: {non_neg_integer(), non_neg_integer(), non_neg_integer()}
 
   @doc """
@@ -43,9 +47,9 @@ defmodule Framebuffer do
 
   ## Arguments
 
-  | parameter | required | default  |
-  | --------- | -------- | -------- |
-  | device    | false    | /dev/fb0 |
+  | parameter | required | type       | default  |
+  | --------- | -------- | ---------- | -------- |
+  | device    | false    | String.t() | /dev/fb0 |
   """
   @spec open(device_t()) :: {:ok, Framebuffer.t()} | {:error, term()}
   def open(device \\ "/dev/fb0"), do: Framebuffer.NIF.open(device)
@@ -66,9 +70,9 @@ defmodule Framebuffer do
 
   ## Arguments
 
-  | parameter   | required | default |
-  | ----------- | -------- | ------- |
-  | framebuffer | true     |         |
+  | parameter   | required | type            | default |
+  | ----------- | -------- | --------------- | ------- |
+  | framebuffer | true     | Framebuffer.t() | |
   """
   @spec info(Framebuffer.t()) :: {:ok, Framebuffer.t()} | {:error, term()}
   def info(framebuffer), do: Framebuffer.NIF.info(framebuffer)
@@ -81,21 +85,24 @@ defmodule Framebuffer do
     end
   end
 
-  defimpl String.Chars do
-    def to_string(framebuffer) do
-      var = framebuffer.var_screeninfo
+  @doc """
+  Assigns a color value to a pixel at a specific coordinate.
 
-      """
-      mode "#{var.xres}x#{var.yres}"
-          geometry #{var.xres} #{var.yres} #{var.xres_virtual} #{var.yres_virtual} #{var.bits_per_pixel}
-          timings #{var.pixclock} #{var.left_margin} #{var.right_margin} #{var.upper_margin} #{var.lower_margin} #{var.hsync_len} #{var.vsync_len}
-          nonstd #{var.nonstd}
-          rgba #{var.red},#{var.green},#{var.blue},#{var.transp}
-      endmode
-      """
-    end
-  end
+  ## Notes:
 
+  - Calculations of the exact memory space utilized by the target pixel is done
+    in the NIF.
+
+  ## Arguments
+
+  | parameter   | required | type            | default |
+  | ----------- | -------- | --------------- | ------- |
+  | framebuffer | true   | Framebuffer.t() | |
+  | x           | true   | integer         | |
+  | y           | true   | integer         | |
+  | color       | true   | {255, 255, 255} | |
+
+  """
   @spec put_pixel(Framebuffer.t(), x(), y(), color()) :: :ok | {:error, term()}
   def put_pixel(framebuffer, x, y, color) do
     cond do
@@ -110,6 +117,15 @@ defmodule Framebuffer do
     end
   end
 
+  @doc """
+  Writes black to all pixels
+
+  ## Arguments
+
+  | parameter   | required | type            | default |
+  | ----------- | -------- | --------------- | ------- |
+  | framebuffer | true     | Framebuffer.t() | |
+  """
   @spec clear(Framebuffer.t()) :: {:ok, Framebuffer.t()}
   def clear(framebuffer) do
     zero = {0, 0, 0}
@@ -124,6 +140,15 @@ defmodule Framebuffer do
     {:ok, framebuffer}
   end
 
+  @doc """
+  Writes random colors to all pixels
+
+  ## Arguments
+
+  | parameter   | required | type            | default |
+  | ----------- | -------- | --------------- | ------- |
+  | framebuffer | true     | Framebuffer.t() | |
+  """
   @spec rand(Framebuffer.t()) :: {:ok, Framebuffer.t()}
   def rand(framebuffer) do
     framebuffer
@@ -156,5 +181,20 @@ defmodule Framebuffer do
           {prev, next}
       end
     )
+  end
+
+  defimpl String.Chars do
+    def to_string(framebuffer) do
+      var = framebuffer.var_screeninfo
+
+      """
+      mode "#{var.xres}x#{var.yres}"
+          geometry #{var.xres} #{var.yres} #{var.xres_virtual} #{var.yres_virtual} #{var.bits_per_pixel}
+          timings #{var.pixclock} #{var.left_margin} #{var.right_margin} #{var.upper_margin} #{var.lower_margin} #{var.hsync_len} #{var.vsync_len}
+          nonstd #{var.nonstd}
+          rgba #{var.red},#{var.green},#{var.blue},#{var.transp}
+      endmode
+      """
+    end
   end
 end
